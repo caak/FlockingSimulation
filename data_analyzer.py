@@ -30,7 +30,7 @@ class DataAnalyzer:
                 n = w.birds[bird.neighbours[i]]
                 # distance = pygame.Vector2(0, 0)
                 # v_distance = pygame.Vector2(0, 0)
-                if bird.id in n.neighbours and n.id < 50:
+                if bird.id in n.neighbours and n.id < len(w.birds)-1:
                     other_idx = np.where(n.neighbours == bird.id)[0][0]
                     distance = n.p_measurements[other_idx]
                     v_distance = n.old_v

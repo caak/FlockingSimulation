@@ -19,11 +19,13 @@ from pygame.locals import (
 )
 
 width = 1200
-height = 400
+height = 700
 data_height = 200
 
-w = world_configs.HourGlass(width, height, 40)
-w.birds.append(faulty_bird.NonFlocker(200, 1000, 40))
+bird_count = 50
+
+w = world_configs.HourGlass(width, height, bird_count)
+w.birds.append(faulty_bird.NonFlocker(200, 1000, bird_count))
 # w.birds.append(faulty_bird.NonFlocker(500, 100, 51))
 
 # for i in range(0, 5):

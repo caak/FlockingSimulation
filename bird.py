@@ -6,9 +6,9 @@ from world import World
 
 class Bird:
 
-    attraction_weight = 2.0
+    attraction_weight = 8.0
     avoidance_weight = 2000.0
-    alignment_weight = 0.2
+    alignment_weight = 0.1
     target_weight = 200
 
     neighborhood_size = 5
@@ -20,7 +20,7 @@ class Bird:
     alignment_sum = 0.0
     target_sum = 0.0
 
-    turn_rate_factor = 0.2
+    turn_rate_factor = 0.1
 
     def __init__(self, x, y, bird_id):
         self.p = pygame.Vector2(x, y)
@@ -33,8 +33,8 @@ class Bird:
 
         self.p_measurements = []
         self.v_measurements = []
-        self.p_std = 10
-        self.v_std = 10
+        self.p_std = 1
+        self.v_std = 1
 
         self.old_p = self.p
         self.old_v = self.v
