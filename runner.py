@@ -25,8 +25,9 @@ data_height = 200
 bird_count = 50
 
 w = world_configs.HourGlass(width, height, bird_count)
-w.birds.append(faulty_bird.NonFlocker(200, 1000, bird_count))
-# w.birds.append(faulty_bird.NonFlocker(500, 100, 51))
+# w = world_configs.TestSetup(width, height)
+# w.birds.append(faulty_bird.FaultyBird(200, 1000, bird_count, 1, 1))
+w.birds.append(faulty_bird.NonFlocker(500, 100, bird_count))
 
 # for i in range(0, 5):
 #     interval = 50 * 50.0 / 3
@@ -36,7 +37,9 @@ w.birds.append(faulty_bird.NonFlocker(200, 1000, bird_count))
 screen = pygame.display.set_mode((width, height+data_height))
 data_screen = screen.subsurface(pygame.Rect(0, height, width, data_height))
 
-charter = DataAnalyzer(width, data_height, 100, [5, 40])
+
+# charter = DataAnalyzer(width, data_height, 100, list(range(0, 51)))
+charter = DataAnalyzer(width, data_height, 100, [5, 26, 50])
 
 pygame.init()
 fixed_wing_img = pygame.transform.scale(pygame.image.load('fixed_wing.png'), (20, 20))
@@ -68,7 +71,7 @@ def main():
         # if not, birds may suddenly 'skip' long distances
         if dt > 50:
             print('whoops. That frame took ' + str(dt) + ' ms')
-            continue
+            # continue
 
         # the exit event is needed to stop this while loop
         # all other events are handled in handle_event() for cleaner code
@@ -79,7 +82,7 @@ def main():
                 handle_event(event, w, config)
 
         # make world update itself one time-step
-        w.update(dt)
+        w.update(10)
 
         charter.track(w)
 
@@ -146,7 +149,9 @@ def draw(surface, w, dt, config):
 
 def draw_bird(surface, bird):
     img = fixed_wing_img
-    if not type(bird) == Bird:
+    # if not type(bird) == Bird:
+    #     img = bad_img
+    if bird.marked:
         img = bad_img
     surface.blit(pygame.transform.rotate(img, bird.v.angle_to((0, -1))),
                      (int(bird.p.x) - 10, int(bird.p.y) - 10))

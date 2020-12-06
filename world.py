@@ -18,7 +18,9 @@ class World:
         for bird in self.birds:
             bird.update_neighbours(self)
             bird.update_measurements(self)
-            bird.update_v(self)
+            bird.old_v = bird.v
+
+            bird.v = bird.calculate_v(self)
 
         for bird in self.birds:
             bird.update_p(dt)

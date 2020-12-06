@@ -6,13 +6,13 @@ from world import World
 
 class Bird:
 
-    attraction_weight = 8.0
-    avoidance_weight = 2000.0
-    alignment_weight = 0.1
+    attraction_weight = 10.0
+    avoidance_weight = 5000.0
+    alignment_weight = 1
     target_weight = 200
 
     neighborhood_size = 5
-    max_speed = 250
+    max_speed = 200
     max_speed_squared = max_speed**2
 
     attraction_sum = 0.0
@@ -20,7 +20,7 @@ class Bird:
     alignment_sum = 0.0
     target_sum = 0.0
 
-    turn_rate_factor = 0.1
+    turn_rate_factor = 0.05
 
     def __init__(self, x, y, bird_id):
         self.p = pygame.Vector2(x, y)
@@ -33,39 +33,51 @@ class Bird:
 
         self.p_measurements = []
         self.v_measurements = []
+        self.avoid_measurements = []
         self.p_std = 1
         self.v_std = 1
 
         self.old_p = self.p
         self.old_v = self.v
 
-    def update_v(self, w):
-        target = self.calculate_target(w)
+        self.marked = False
 
-        avoidance = self.calculate_avoidance(w)
 
-        alignment = self.calculate_alignment(w)
+    def calculate_v(self, w):
+        v = Bird.flock(self.p_measurements, self.v_measurements, self.avoid_measurements, self.get_current_target(w), self.v)
+        return v
 
-        attraction = self.calculate_attraction(w)
+    @staticmethod
+    def flock(ps, vs, ams, target, current_v):
+
+        # target = self.calculate_target(w)
+
+        avoidance = Bird.calculate_avoidance(ams)
+
+        alignment = Bird.calculate_alignment(vs)
+
+        attraction = Bird.calculate_attraction(ps)
 
         Bird.attraction_sum += attraction.length()
         Bird.avoidance_sum += avoidance.length()
         Bird.alignment_sum += alignment.length()
         Bird.target_sum += target.length()
 
-        self.old_v = pygame.Vector2(self.v)
+        # self.old_v = pygame.Vector2(self.v)
 
-        self.v += (target + avoidance + alignment + attraction)*Bird.turn_rate_factor
+        new_v = (target + avoidance + alignment + attraction)*Bird.turn_rate_factor
+        new_v += current_v
+        if new_v.length() > Bird.max_speed:
+            new_v *= Bird.max_speed / new_v.length()
 
-        if self.v.length() > Bird.max_speed:
-            self.v *= Bird.max_speed / self.v.length()
+        return new_v
 
 
     def update_p(self, dt):
         self.old_p = pygame.Vector2(self.p)
         self.p += self.v*dt*0.002
 
-    def calculate_target(self, w):
+    def get_current_target(self, w):
         if len(w.targets) > 0:
             target = w.targets[self.current_target]-self.p
             if target.length_squared() < World.target_range**2:
@@ -80,39 +92,37 @@ class Bird:
 
         return target * Bird.target_weight
 
-    def calculate_avoidance(self, world):
+    @staticmethod
+    def calculate_avoidance(ps):
         avoidance = pygame.math.Vector2(0, 0)
-        for n in range(0, len(self.neighbours)):
-            avoidance += self.calculate_neighbor_avoidance(n, world)
+        for distance in ps:
+            if distance.length_squared() == 0:
+                # This case helps break birds apart, stuck in the same position
+                distance = pygame.Vector2((random.randint(0, 1) - 0.5) * 0.1, (random.randint(0, 1) - 0.5) * 0.1)
+            else:
+                distance = (-distance).normalize() / distance.length()
+            avoidance += distance
 
         return avoidance * Bird.avoidance_weight
 
-    def calculate_neighbor_avoidance(self, n, world):
-        distance = -self.p_measurements[n]
-        if distance.length_squared() == 0:
-            # This case helps break birds apart, stuck in the same position
-            distance = pygame.Vector2((random.randint(0, 1) - 0.5) * 0.1, (random.randint(0, 1) - 0.5) * 0.1)
-        else:
-            distance = distance.normalize() * (1 / distance.length())
-        return distance
-
-    def calculate_alignment(self, world):
+    @staticmethod
+    def calculate_alignment(vs):
         alignment = pygame.math.Vector2(0, 0)
-        for n in range(0, len(self.neighbours)):
-            bird = world.birds[self.neighbours[n]]
-            alignment += self.v_measurements[n]
+        for v in vs:
+            alignment += v
 
-        alignment = alignment/len(self.neighbours)
+        alignment = alignment/len(vs)
 
         return alignment * Bird.alignment_weight
 
-    def calculate_attraction(self, world):
+    @staticmethod
+    def calculate_attraction(ps):
         attraction = pygame.math.Vector2(0, 0)
 
-        for n in range(0, len(self.neighbours)):
-            attraction += self.p_measurements[n]
+        for distance in ps:
+            attraction += distance
 
-        attraction /= len(self.p_measurements)
+        attraction /= len(ps)
 
         return attraction * Bird.attraction_weight
 
@@ -123,11 +133,17 @@ class Bird:
     def update_measurements(self, world):
         ps = []
         vs = []
+        am = []
         for neighbor in self.neighbours:
-            ps.append(world.birds[neighbor].p - self.p + Bird.error_vector(self.p_std))
-            vs.append(world.birds[neighbor].v + Bird.error_vector(self.v_std))
-
+            n = world.birds[neighbor]
+            ps.append(n.p - self.p + Bird.error_vector(self.p_std))
+            vs.append(n.v + Bird.error_vector(self.v_std))
+            if n.marked:
+                am.append(ps[-1])
+            else:
+                am.append(ps[-1])
         self.p_measurements = ps
+        self.avoid_measurements = am
         self.v_measurements = vs
 
     @staticmethod

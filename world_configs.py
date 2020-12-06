@@ -9,8 +9,7 @@ class TestSetup(World):
         super().__init__(width, height)
         for i in range(0, 50):
             self.birds.append(Bird(200 + (i%2), 100 + (50 * i), i))
-        for i in range(50, 53):
-            self.birds.append(FaultyBird(200 + (i%2), 100 + (50 * i), i, 10, 1))
+
 
 class HourGlass(World):
     def __init__(self, width, height, n):
