@@ -11,6 +11,7 @@ from data_analyzer import DataAnalyzer
 from pygame.locals import (
     K_s,
     K_r,
+    K_t,
     KEYDOWN,
     QUIT,
     K_SPACE,
@@ -22,12 +23,14 @@ width = 1200
 height = 700
 data_height = 200
 
-bird_count = 50
+good_count = 50
+bad_count = 0
+bird_count = good_count + bad_count
 
-w = world_configs.HourGlass(width, height, bird_count)
-# w = world_configs.TestSetup(width, height)
-# w.birds.append(faulty_bird.FaultyBird(200, 1000, bird_count, 1, 1))
-w.birds.append(faulty_bird.NonFlocker(500, 100, bird_count))
+# w = world_configs.HourGlass(width, height, bird_count)
+w = world_configs.TestSetup(width, height, bird_count)
+# w = world_configs.Merge(width, height, good_count, bad_count)
+
 
 # for i in range(0, 5):
 #     interval = 50 * 50.0 / 3
@@ -39,7 +42,7 @@ data_screen = screen.subsurface(pygame.Rect(0, height, width, data_height))
 
 
 # charter = DataAnalyzer(width, data_height, 100, list(range(0, 51)))
-charter = DataAnalyzer(width, data_height, 100, [5, 26, 50])
+charter = DataAnalyzer(width, data_height, 100, good_count, bad_count)
 
 pygame.init()
 fixed_wing_img = pygame.transform.scale(pygame.image.load('fixed_wing.png'), (20, 20))
@@ -47,7 +50,6 @@ bad_img = pygame.transform.scale(pygame.image.load('bad.png'), (20, 20))
 target_img = pygame.transform.scale(pygame.image.load('flag.png'), (20, 20))
 
 font = pygame.font.SysFont(None, 72)
-
 
 
 def main():
@@ -58,8 +60,6 @@ def main():
     count = 0
     total = 0
 
-
-
     while running:
         # calculate delta t (time since last frame)
         # variable frame-rate is useful for visualization
@@ -67,10 +67,11 @@ def main():
 
         (dt, count, total, avg_fr, t) = get_dt(count, total, avg_fr, t)
 
+        # print(dt)
         # ignore frames that are too 'long'
         # if not, birds may suddenly 'skip' long distances
-        if dt > 50:
-            print('whoops. That frame took ' + str(dt) + ' ms')
+        # if dt > 50:
+        #     print('whoops. That frame took ' + str(dt) + ' ms')
             # continue
 
         # the exit event is needed to stop this while loop
@@ -82,9 +83,11 @@ def main():
                 handle_event(event, w, config)
 
         # make world update itself one time-step
-        w.update(10)
+        if not config.pause:
+            w.update(10)
 
-        charter.track(w)
+        if not config.pause:
+            charter.track(w)
 
         # draw new frame
         draw(screen, w, avg_fr, config)
@@ -98,10 +101,6 @@ def draw_groups(screen, world):
     for bird in world.birds:
         for n in bird.neighbours:
             neighbor = world.birds[n]
-            difference = neighbor.v - bird.v
-            difference = difference.length()
-            # print(difference)
-            # intensity = (difference/max_difference_length_squared)
 
             edge_color = 0
             pygame.draw.line(screen, (edge_color, edge_color, edge_color), bird.p, neighbor.p, int(1))
@@ -117,6 +116,10 @@ def handle_event(e, w, c):
     elif e.type == KEYDOWN:
         if e.key == K_s:
             c.draw_groups = not c.draw_groups
+        elif e.key == K_SPACE:
+            c.pause = not c.pause
+        elif e.key == K_t:
+            charter.reset_confusion_matrix()
 
 
 def draw_target(surface, t):
@@ -142,7 +145,7 @@ def draw(surface, w, dt, config):
     for t in w.targets:
         draw_target(surface, t)
 
-    charter.draw(data_screen)
+    # charter.draw(data_screen)
 
     # finished drawing
     pygame.display.flip()
@@ -152,9 +155,11 @@ def draw_bird(surface, bird):
     # if not type(bird) == Bird:
     #     img = bad_img
     if bird.marked:
+        pygame.draw.circle(surface, (255, 0, 0), (int(bird.p.x), int(bird.p.y)), 20, 1)
+    if type(bird) == faulty_bird.NonFlocker:
         img = bad_img
-    surface.blit(pygame.transform.rotate(img, bird.v.angle_to((0, -1))),
-                     (int(bird.p.x) - 10, int(bird.p.y) - 10))
+
+    surface.blit(pygame.transform.rotate(img, bird.v.angle_to((0, -1))), (int(bird.p.x) - 10, int(bird.p.y) - 10))
 
 
 def get_dt(count, total, avg_fr, t):

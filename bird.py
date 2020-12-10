@@ -7,8 +7,8 @@ from world import World
 class Bird:
 
     attraction_weight = 10.0
-    avoidance_weight = 5000.0
-    alignment_weight = 1
+    avoidance_weight = 2000.0
+    alignment_weight = 0.3
     target_weight = 200
 
     neighborhood_size = 5
