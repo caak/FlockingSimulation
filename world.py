@@ -20,6 +20,7 @@ class World:
             bird.update_measurements(self)
             bird.old_v = bird.v
 
+        for bird in self.birds:
             bird.v = bird.calculate_v(self)
 
         for bird in self.birds:

@@ -8,7 +8,7 @@ class Bird:
 
     attraction_weight = 10.0
     avoidance_weight = 2000.0
-    alignment_weight = 0.3
+    alignment_weight = 2
     target_weight = 200
 
     neighborhood_size = 5
@@ -30,11 +30,11 @@ class Bird:
         self.neighbours = []
 
         self.current_target = 0
+        self.target_sequence = []
 
         self.p_measurements = []
         self.v_measurements = []
-        self.avoid_measurements = []
-        self.p_std = 1
+        self.p_std = 0
         self.v_std = 1
 
         self.old_p = self.p
@@ -44,15 +44,15 @@ class Bird:
 
 
     def calculate_v(self, w):
-        v = Bird.flock(self.p_measurements, self.v_measurements, self.avoid_measurements, self.get_current_target(w), self.v)
+        v = Bird.flock(self.p_measurements, self.v_measurements, self.get_current_target(w), self.v)
         return v
 
     @staticmethod
-    def flock(ps, vs, ams, target, current_v):
+    def flock(ps, vs, target, current_v):
 
         # target = self.calculate_target(w)
 
-        avoidance = Bird.calculate_avoidance(ams)
+        avoidance = Bird.calculate_avoidance(ps)
 
         alignment = Bird.calculate_alignment(vs)
 
@@ -67,10 +67,10 @@ class Bird:
 
         new_v = (target + avoidance + alignment + attraction)*Bird.turn_rate_factor
         new_v += current_v
-        if new_v.length() > Bird.max_speed:
-            new_v *= Bird.max_speed / new_v.length()
+        # if new_v.length() > Bird.max_speed:
+        #     new_v *= Bird.max_speed / new_v.length()
 
-        return new_v
+        return new_v.normalize()*Bird.max_speed
 
 
     def update_p(self, dt):
@@ -78,13 +78,13 @@ class Bird:
         self.p += self.v*dt*0.002
 
     def get_current_target(self, w):
-        if len(w.targets) > 0:
-            target = w.targets[self.current_target]-self.p
+        if len(self.target_sequence) > 0:
+            target = self.target_sequence[self.current_target]-self.p
             if target.length_squared() < World.target_range**2:
                 self.current_target += 1
-                if self.current_target == len(w.targets):
+                if self.current_target == len(self.target_sequence):
                     self.current_target = 0
-            target = w.targets[self.current_target] - self.p
+            target = self.target_sequence[self.current_target] - self.p
             if target.length_squared() > 0:
                 target = target.normalize()
         else:
@@ -133,17 +133,12 @@ class Bird:
     def update_measurements(self, world):
         ps = []
         vs = []
-        am = []
         for neighbor in self.neighbours:
             n = world.birds[neighbor]
             ps.append(n.p - self.p + Bird.error_vector(self.p_std))
             vs.append(n.v + Bird.error_vector(self.v_std))
-            if n.marked:
-                am.append(ps[-1])
-            else:
-                am.append(ps[-1])
+
         self.p_measurements = ps
-        self.avoid_measurements = am
         self.v_measurements = vs
 
     @staticmethod

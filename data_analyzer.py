@@ -5,14 +5,13 @@ import faulty_bird
 
 class DataAnalyzer:
     def __init__(self, w, h, tracking_length, good_count, bad_count):
-        self.values = []
+        self.errors = []
+        self.avg_errors = []
         self.max_length = tracking_length
         self.current_index = -1
 
         self.w = w
         self.h = h
-
-        self.v = pygame.Vector2(0, 0)
 
         self.good_count = good_count
         self.bad_count = bad_count
@@ -33,87 +32,54 @@ class DataAnalyzer:
         self.FN = 0
         self.TN = 0
 
+    # update and add current errors + avg_errors + avg_error + median_error
     def track(self, w):
         self.current_index += 1
         if self.current_index == self.max_length:
             self.current_index = 0
-        output = []
+
+        errors = []
+        avg_errors = []
+
 
         for t in range(0, self.good_count + self.bad_count):
             bird = w.birds[t]
 
-            ps = []
-            vs = []
-            if len(w.targets) > 0:
-                target = (w.targets[bird.current_target] - bird.old_p)
-            else:
-                target = pygame.Vector2(0,0)
-            if target.length_squared() > 0:
-                target = target.normalize()
-            target *= Bird.target_weight
-            for i in bird.neighbours:
-                n = w.birds[i]
-                found = False
-                for j in range(0, len(n.neighbours)):
-                    if bird.id == n.neighbours[j]:
-                        ps.append(-n.p_measurements[j])
-                        vs.append(n.v_measurements[j])
-                        found = True
-                if not found:
-                    distance = n.p - bird.p + Bird.error_vector(n.p_std)
-                    velocity = n.v + Bird.error_vector(n.v_std)
-                    ps.append(distance)
-                    vs.append(velocity)
+            ps, vs = self.infer_measurements(w, bird)
+            target = self.infer_target(w, bird)
 
-            prediction = Bird.flock(ps, vs, ps, target, bird.old_v)
+            prediction = Bird.flock(ps, vs, target, bird.old_v)
 
-            value = (prediction-bird.v).length()
+            error = (prediction-bird.v).length()
+            errors.append(error)
 
-            average_length = 10
-            if len(self.values) >= average_length:
-                index = self.current_index
-                for i in range(0, average_length-1):
-                    index -= 1
-                    if index < 0:
-                        index = self.max_length-1
-                    value += self.values[index][t]
-                value = value/average_length
-            output.append(value)
-        if len(self.values) < self.max_length:
-            self.values.append(output)
+            avg_errors.append(self.calculate_running_avg(t, error))
+
+        if len(self.errors) < self.max_length:
+            self.errors.append(errors)
         else:
-            self.values[self.current_index] = output
+            self.errors[self.current_index] = errors
+
+        if len(self.avg_errors) < self.max_length:
+            self.avg_errors.append(avg_errors)
+        else:
+            self.avg_errors[self.current_index] = avg_errors
+
+
 
         self.avg_error = 0
-        for value in output:
-            self.avg_error += value
+        for error in errors:
+            self.avg_error += error
         self.avg_error /= len(w.birds)
 
-        self.median_error = sorted(output)[int(len(w.birds)/2)]
+        self.median_error = sorted(avg_errors)[int(len(w.birds)/2)]
 
-        if len(self.values) >= 50:
-            # Mark birds suspected to be nonflockers
-            for i in range(0, len(w.birds)):
-                bird_error = output[i]
-                bird = w.birds[i]
-                if bird_error > self.median_error*self.treshold_multiplier:
-                    bird.marked = True
-                    if type(bird) == faulty_bird.NonFlocker:
-                        self.TP += 1
-                    else:
-                        self.FP += 1
-                else:
-                    bird.marked = False
-                    if type(bird) == faulty_bird.NonFlocker:
-                        self.FN += 1
-                    else:
-                        self.TN += 1
+        self.mark_suspicious_birds(w)
 
-            # print TP and FP
-            P = self.TP + self.FP
-            N = self.TN + self.FN
-            if P > 0 and N > 0:
-                print(self.TP / P, self.FN / N, self.TP, self.FP, self.TN, self.FN)
+
+
+
+
 
     def draw(self, screen):
         screen.fill((0, 0, 0))
@@ -132,19 +98,84 @@ class DataAnalyzer:
         top = 5
         bot = 0
         color = (250, 250, 250)
+        if len(self.avg_errors) < 50:
+            return
         for tracked in range(0, self.good_count + self.bad_count):
             points = []
             for i in range(self.current_index, -1, -1):
                 x = self.w - ((self.current_index-i) * distance)
-                y = ((top-self.values[i][tracked]) / (top-bot)) * self.h
+
+                y = ((top - self.avg_errors[i][tracked]) / (top - bot)) * self.h
                 points.append((x, y))
 
-            for i in range(len(self.values)-1, self.current_index, -1):
+            for i in range(len(self.avg_errors) - 1, self.current_index, -1):
                 x = self.w - ((self.current_index+(100-i)) * distance)
-                y = ((top - self.values[i][tracked]) / (top - bot)) * self.h
+                y = ((top - self.avg_errors[i][tracked]) / (top - bot)) * self.h
                 points.append((x, y))
 
             if tracked >= self.good_count:
                 color = (250, 0, 0)
             if len(points) > 1:
                 pygame.draw.lines(screen, color, False, points)
+
+    def infer_measurements(self, w, bird):
+        ps = []
+        vs = []
+        for i in bird.neighbours:
+            n = w.birds[i]
+            found = False
+            for j in range(0, len(n.neighbours)):
+                if bird.id == n.neighbours[j]:
+                    ps.append(-n.p_measurements[j])
+                    vs.append(n.old_v + bird.error_vector(n.v_std))
+                    found = True
+
+            if not found:
+                distance = n.old_p - bird.old_p + Bird.error_vector(n.p_std)
+                velocity = n.old_v + Bird.error_vector(n.v_std)
+                ps.append(distance)
+                vs.append(velocity)
+
+        return ps, vs
+
+    def infer_target(self, w, bird):
+        if len(w.targets) > 0:
+            target = (bird.target_sequence[bird.current_target] - bird.old_p)
+        else:
+            target = pygame.Vector2(0, 0)
+        if target.length_squared() > 0:
+            target = target.normalize()
+        target *= Bird.target_weight
+        return target
+
+    def calculate_running_avg(self, bird, error):
+        average_length = 10
+        if len(self.errors) >= average_length:
+            index = self.current_index-1
+            for i in range(0, average_length-1):
+                if index < 0:
+                    index = self.max_length - 1
+                error += self.errors[index][bird]
+                index -= 1
+            error = error / average_length
+
+        return error
+
+    def mark_suspicious_birds(self, w):
+        if len(self.avg_errors) >= 50:
+            # Mark birds suspected to be nonflockers
+            for i in range(0, len(w.birds)):
+                bird_error = self.avg_errors[self.current_index][i]
+                bird = w.birds[i]
+                if bird_error > self.median_error * self.treshold_multiplier:
+                    bird.marked = True
+                    if type(bird) == faulty_bird.NonFlocker:
+                        self.TP += 1
+                    else:
+                        self.FP += 1
+                else:
+                    bird.marked = False
+                    if type(bird) == faulty_bird.NonFlocker:
+                        self.FN += 1
+                    else:
+                        self.TN += 1

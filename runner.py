@@ -24,12 +24,17 @@ height = 700
 data_height = 200
 
 good_count = 50
-bad_count = 0
+bad_count = 5
 bird_count = good_count + bad_count
 
-# w = world_configs.HourGlass(width, height, bird_count)
-w = world_configs.TestSetup(width, height, bird_count)
+chart = True
+
+# w = world_configs.HourGlass(width, height, good_count, bad_count)
+# w = world_configs.TestSetup(width, height, bird_count)
 # w = world_configs.Merge(width, height, good_count, bad_count)
+w = world_configs.Circle(width, height, good_count, bad_count, 1)
+# w = world_configs.DualCircle(width, height, good_count, bad_count)
+
 
 
 # for i in range(0, 5):
@@ -41,7 +46,6 @@ screen = pygame.display.set_mode((width, height+data_height))
 data_screen = screen.subsurface(pygame.Rect(0, height, width, data_height))
 
 
-# charter = DataAnalyzer(width, data_height, 100, list(range(0, 51)))
 charter = DataAnalyzer(width, data_height, 100, good_count, bad_count)
 
 pygame.init()
@@ -86,8 +90,12 @@ def main():
         if not config.pause:
             w.update(10)
 
-        if not config.pause:
+        if chart and not config.pause:
             charter.track(w)
+        elif charter.TP + charter.FN > 0:
+            P = charter.TP + charter.FN
+            N = charter.TN + charter.FP
+            print(charter.TP / P, charter.FN / N, charter.TP, charter.FP, charter.TN, charter.FN)
 
         # draw new frame
         draw(screen, w, avg_fr, config)
@@ -145,7 +153,8 @@ def draw(surface, w, dt, config):
     for t in w.targets:
         draw_target(surface, t)
 
-    # charter.draw(data_screen)
+    if chart:
+        charter.draw(data_screen)
 
     # finished drawing
     pygame.display.flip()

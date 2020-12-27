@@ -20,7 +20,7 @@ class NonFlocker(Bird):
     def calculate_v(self, w):
         new_v = self.get_current_target(w)*Bird.turn_rate_factor
         new_v += self.v
-        if new_v.length() > Bird.max_speed:
-            new_v *= Bird.max_speed / new_v.length()
+        if new_v.length_squared() > 0.0:
+            new_v = new_v.normalize() * Bird.max_speed
         return new_v
 
