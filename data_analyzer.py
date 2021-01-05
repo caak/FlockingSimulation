@@ -19,7 +19,7 @@ class DataAnalyzer:
         self.avg_error = 0.0
         self.median_error = 0.0
 
-        self.treshold_multiplier = 3
+        self.threshold_multiplier = 2.0
 
         self.FP = 0
         self.TP = 0
@@ -77,10 +77,6 @@ class DataAnalyzer:
         self.mark_suspicious_birds(w)
 
 
-
-
-
-
     def draw(self, screen):
         screen.fill((0, 0, 0))
 
@@ -88,8 +84,8 @@ class DataAnalyzer:
 
         # top = max(self.values)*1.01
         # bot = min(self.values)*0.99
-        median_height = self.h*((5-(self.median_error*self.treshold_multiplier))/5)
-        avg_height = self.h*((5-(self.avg_error*self.treshold_multiplier))/5)
+        median_height = self.h*((5-(self.median_error*self.threshold_multiplier))/5)
+        avg_height = self.h*((5-(self.avg_error*self.threshold_multiplier))/5)
         fixed_height = self.h*((5-(1))/5)
         pygame.draw.aaline(screen, (0, 255, 0), (0.0, median_height), (self.w, median_height))
         pygame.draw.aaline(screen, (0, 0, 255), (0.0, avg_height), (self.w, avg_height))
@@ -139,7 +135,7 @@ class DataAnalyzer:
         return ps, vs
 
     def infer_target(self, w, bird):
-        if len(w.targets) > 0:
+        if len(bird.target_sequence) > 0:
             target = (bird.target_sequence[bird.current_target] - bird.old_p)
         else:
             target = pygame.Vector2(0, 0)
@@ -167,15 +163,16 @@ class DataAnalyzer:
             for i in range(0, len(w.birds)):
                 bird_error = self.avg_errors[self.current_index][i]
                 bird = w.birds[i]
-                if bird_error > self.median_error * self.treshold_multiplier:
+                record_limit = 600
+                if bird_error > self.median_error * self.threshold_multiplier:
                     bird.marked = True
-                    if type(bird) == faulty_bird.NonFlocker:
+                    if type(bird) == faulty_bird.NonFlocker: # and bird.p.x < record_limit:
                         self.TP += 1
                     else:
                         self.FP += 1
                 else:
                     bird.marked = False
-                    if type(bird) == faulty_bird.NonFlocker:
+                    if type(bird) == faulty_bird.NonFlocker: # and bird.p.x < record_limit:
                         self.FN += 1
                     else:
                         self.TN += 1

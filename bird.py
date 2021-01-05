@@ -6,8 +6,9 @@ from world import World
 
 class Bird:
 
+    avoid_range = 100
     attraction_weight = 10.0
-    avoidance_weight = 2000.0
+    avoidance_weight = 0.05
     alignment_weight = 2
     target_weight = 200
 
@@ -34,7 +35,7 @@ class Bird:
 
         self.p_measurements = []
         self.v_measurements = []
-        self.p_std = 0
+        self.p_std = 1
         self.v_std = 1
 
         self.old_p = self.p
@@ -96,12 +97,14 @@ class Bird:
     def calculate_avoidance(ps):
         avoidance = pygame.math.Vector2(0, 0)
         for distance in ps:
-            if distance.length_squared() == 0:
+            length = distance.length()
+            if length == 0:
                 # This case helps break birds apart, stuck in the same position
-                distance = pygame.Vector2((random.randint(0, 1) - 0.5) * 0.1, (random.randint(0, 1) - 0.5) * 0.1)
-            else:
-                distance = (-distance).normalize() / distance.length()
-            avoidance += distance
+                avoidance += pygame.Vector2((random.randint(0, 1) - 0.5) * 0.1, (random.randint(0, 1) - 0.5) * 0.1)
+            elif length < Bird.avoid_range:
+            # else:
+                # avoidance += (-distance).normalize() / distance.length()
+                avoidance += -distance * (Bird.avoid_range-length)
 
         return avoidance * Bird.avoidance_weight
 
@@ -135,8 +138,13 @@ class Bird:
         vs = []
         for neighbor in self.neighbours:
             n = world.birds[neighbor]
-            ps.append(n.p - self.p + Bird.error_vector(self.p_std))
-            vs.append(n.v + Bird.error_vector(self.v_std))
+            distance = (n.p - self.p)
+            error_factor = distance.length() * 0.05
+            p_error = error_factor * Bird.error_vector(self.p_std)
+            v_error = error_factor * Bird.error_vector(self.v_std)
+
+            ps.append(distance + p_error)
+            vs.append(n.v + v_error)
 
         self.p_measurements = ps
         self.v_measurements = vs

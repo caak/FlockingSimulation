@@ -24,15 +24,15 @@ height = 700
 data_height = 200
 
 good_count = 50
-bad_count = 5
+bad_count = 10
 bird_count = good_count + bad_count
 
 chart = True
 
-# w = world_configs.HourGlass(width, height, good_count, bad_count)
+w = world_configs.HourGlass(width, height, good_count, bad_count)
 # w = world_configs.TestSetup(width, height, bird_count)
 # w = world_configs.Merge(width, height, good_count, bad_count)
-w = world_configs.Circle(width, height, good_count, bad_count, 1)
+# w = world_configs.Circle(width, height, good_count, bad_count, 5)
 # w = world_configs.DualCircle(width, height, good_count, bad_count)
 
 
@@ -55,6 +55,7 @@ target_img = pygame.transform.scale(pygame.image.load('flag.png'), (20, 20))
 
 font = pygame.font.SysFont(None, 72)
 
+iteration_count = 0
 
 def main():
     running = True
@@ -92,13 +93,11 @@ def main():
 
         if chart and not config.pause:
             charter.track(w)
-        elif charter.TP + charter.FN > 0:
-            P = charter.TP + charter.FN
-            N = charter.TN + charter.FP
-            print(charter.TP / P, charter.FN / N, charter.TP, charter.FP, charter.TN, charter.FN)
 
         # draw new frame
         draw(screen, w, avg_fr, config)
+
+        config.iteration_count += 1
 
 
 def set_target(m_pos, w):
@@ -126,6 +125,10 @@ def handle_event(e, w, c):
             c.draw_groups = not c.draw_groups
         elif e.key == K_SPACE:
             c.pause = not c.pause
+            if charter.TP + charter.FN > 0:
+                P = charter.TP + charter.FN
+                N = charter.TN + charter.FP
+                print(c.iteration_count, charter.TP / P, charter.FP / N, charter.TP, charter.FP, charter.TN, charter.FN)
         elif e.key == K_t:
             charter.reset_confusion_matrix()
 
