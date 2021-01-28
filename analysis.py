@@ -1,6 +1,6 @@
 import world_configs
 import pygame
-import faulty_bird
+import intruder
 from bird import Bird
 import matplotlib.pyplot as plt
 import random
@@ -23,7 +23,7 @@ bad_bird_count = 1
 w = world_configs.HourGlass(1200, 700, normal_bird_count)
 interval = normal_bird_count * 50.0 / bad_bird_count
 for i in range(0, bad_bird_count):
-    w.birds.append(faulty_bird.FaultyBird(200 + (i % 2), 490 + (interval * i), len(w.birds), 10, 1))
+    w.birds.append(intruder.Follower(200 + (i % 2), 490 + (interval * i), len(w.birds), 10, 1))
 
 w.birds[50].p_std
 

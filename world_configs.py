@@ -1,6 +1,6 @@
 from world import World
 from bird import Bird
-from faulty_bird import NonFlocker
+from intruder import NonFlocker, Follower
 import pygame
 import random
 import math
@@ -13,7 +13,7 @@ class TestSetup(World):
 
 
 class HourGlass(World):
-    def __init__(self, width, height, good_count, bad_count):
+    def __init__(self, width, height, good_count, bad_count, p_std=1, v_std=1, faulty_type=NonFlocker):
         super().__init__(width, height)
         targets = [[200, 100], [600, 275], [1000, 100],
                    [1000, 600], [600, 425], [200, 600]]
@@ -21,12 +21,12 @@ class HourGlass(World):
             self.targets.append(pygame.Vector2(t[0], t[1]))
 
         for i in range(0, good_count):
-            bird = Bird(200 + ((i%2))*40, 300 + (15 * i), i)
+            bird = Bird(200 + ((i%2))*40, 300 + (15 * i), i, p_std=p_std, v_std=v_std)
             bird.target_sequence = self.targets
             self.birds.append(bird)
 
         for i in range(0, bad_count):
-            bird = NonFlocker(200 + ((i % 2)) * 40, 350 + (65 * i), i+good_count)
+            bird = faulty_type(200 + ((i % 2)) * 40, 350 + (65 * i), i+good_count, p_std=p_std, v_std=v_std)
             bird.target_sequence = self.targets
             self.birds.append(bird)
 

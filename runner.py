@@ -5,7 +5,7 @@ from sim_config import Config
 from world import World
 import world_configs
 from bird import Bird
-import faulty_bird
+import intruder
 from data_analyzer import DataAnalyzer
 
 from pygame.locals import (
@@ -29,7 +29,7 @@ bird_count = good_count + bad_count
 
 chart = True
 
-w = world_configs.HourGlass(width, height, good_count, bad_count)
+w = world_configs.HourGlass(width, height, good_count, bad_count, v_std=1, faulty_type=intruder.NonFlocker)
 # w = world_configs.TestSetup(width, height, bird_count)
 # w = world_configs.Merge(width, height, good_count, bad_count)
 # w = world_configs.Circle(width, height, good_count, bad_count, 5)
@@ -168,7 +168,7 @@ def draw_bird(surface, bird):
     #     img = bad_img
     if bird.marked:
         pygame.draw.circle(surface, (255, 0, 0), (int(bird.p.x), int(bird.p.y)), 20, 1)
-    if type(bird) == faulty_bird.NonFlocker:
+    if type(bird) != Bird:
         img = bad_img
 
     surface.blit(pygame.transform.rotate(img, bird.v.angle_to((0, -1))), (int(bird.p.x) - 10, int(bird.p.y) - 10))

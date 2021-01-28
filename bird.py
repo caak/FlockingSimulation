@@ -2,6 +2,7 @@ import pygame
 import random
 import numpy
 from world import World
+import time
 
 
 class Bird:
@@ -23,7 +24,9 @@ class Bird:
 
     turn_rate_factor = 0.05
 
-    def __init__(self, x, y, bird_id):
+    total_duration = 0.0
+
+    def __init__(self, x, y, bird_id, p_std=1, v_std=1):
         self.p = pygame.Vector2(x, y)
         self.v = pygame.Vector2(0, 0)
         self.id = bird_id
@@ -33,26 +36,26 @@ class Bird:
         self.current_target = 0
         self.target_sequence = []
 
-        self.p_measurements = []
-        self.v_measurements = []
-        self.p_std = 1
-        self.v_std = 1
+        self.p_measurements = [0]*Bird.neighborhood_size
+        self.v_measurements = [0]*Bird.neighborhood_size
+        self.p_std = p_std
+        self.v_std = v_std
 
         self.old_p = self.p
         self.old_v = self.v
 
         self.marked = False
 
+        self.time_since_target = 0
+
 
     def calculate_v(self, w):
+        self.time_since_target += 1
         v = Bird.flock(self.p_measurements, self.v_measurements, self.get_current_target(w), self.v)
         return v
 
     @staticmethod
     def flock(ps, vs, target, current_v):
-
-        # target = self.calculate_target(w)
-
         avoidance = Bird.calculate_avoidance(ps)
 
         alignment = Bird.calculate_alignment(vs)
@@ -83,6 +86,7 @@ class Bird:
             target = self.target_sequence[self.current_target]-self.p
             if target.length_squared() < World.target_range**2:
                 self.current_target += 1
+                self.time_since_target = 0
                 if self.current_target == len(self.target_sequence):
                     self.current_target = 0
             target = self.target_sequence[self.current_target] - self.p
@@ -99,7 +103,7 @@ class Bird:
         for distance in ps:
             length = distance.length()
             if length == 0:
-                # This case helps break birds apart, stuck in the same position
+                # This case helps break birds apart when stuck in the same position
                 avoidance += pygame.Vector2((random.randint(0, 1) - 0.5) * 0.1, (random.randint(0, 1) - 0.5) * 0.1)
             elif length < Bird.avoid_range:
             # else:
@@ -134,21 +138,13 @@ class Bird:
         self.neighbours = sorted_birds[1:Bird.neighborhood_size+1]
 
     def update_measurements(self, world):
-        ps = []
-        vs = []
-        for neighbor in self.neighbours:
-            n = world.birds[neighbor]
+        for i in range(0, len(self.neighbours)):
+            n = world.birds[self.neighbours[i]]
             distance = (n.p - self.p)
-            error_factor = distance.length() * 0.05
-            p_error = error_factor * Bird.error_vector(self.p_std)
-            v_error = error_factor * Bird.error_vector(self.v_std)
+            start = time.thread_time_ns()
+            p_error = pygame.Vector2(world.p_errors[self.id][i*2], world.p_errors[self.id][(i*2)+1])
+            v_error = pygame.Vector2(world.v_errors[self.id][i*2], world.v_errors[self.id][(i*2)+1])
+            Bird.total_duration += time.thread_time_ns()-start
 
-            ps.append(distance + p_error)
-            vs.append(n.v + v_error)
-
-        self.p_measurements = ps
-        self.v_measurements = vs
-
-    @staticmethod
-    def error_vector(std):
-        return pygame.Vector2(numpy.random.normal(0, std), numpy.random.normal(0, std))
+            self.p_measurements[i] = distance + p_error
+            self.v_measurements[i] = n.v + v_error

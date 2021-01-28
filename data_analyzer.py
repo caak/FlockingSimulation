@@ -1,7 +1,9 @@
 import pygame
 from bird import Bird
 import numpy as np
-import faulty_bird
+import intruder
+import time
+
 
 class DataAnalyzer:
     def __init__(self, w, h, tracking_length, good_count, bad_count):
@@ -26,6 +28,9 @@ class DataAnalyzer:
         self.FN = 0
         self.TN = 0
 
+        self.good_error_sum = 0.0
+        self.bad_error_sum = 0.0
+
     def reset_confusion_matrix(self):
         self.FP = 0
         self.TP = 0
@@ -43,17 +48,28 @@ class DataAnalyzer:
 
 
         for t in range(0, self.good_count + self.bad_count):
+            current_t = time.thread_time_ns()
             bird = w.birds[t]
 
-            ps, vs = self.infer_measurements(w, bird)
+            ps, vs, v2s = self.infer_measurements(w, bird)
             target = self.infer_target(w, bird)
+
 
             prediction = Bird.flock(ps, vs, target, bird.old_v)
 
-            error = (prediction-bird.v).length()
+            avg_v_observed = pygame.Vector2(0,0)
+            for v in v2s:
+                avg_v_observed += v
+
+            avg_v_observed /= len(v2s)
+
+
+            error = (prediction-avg_v_observed).length()
             errors.append(error)
 
+
             avg_errors.append(self.calculate_running_avg(t, error))
+
 
         if len(self.errors) < self.max_length:
             self.errors.append(errors)
@@ -64,7 +80,6 @@ class DataAnalyzer:
             self.avg_errors.append(avg_errors)
         else:
             self.avg_errors[self.current_index] = avg_errors
-
 
 
         self.avg_error = 0
@@ -86,7 +101,7 @@ class DataAnalyzer:
         # bot = min(self.values)*0.99
         median_height = self.h*((5-(self.median_error*self.threshold_multiplier))/5)
         avg_height = self.h*((5-(self.avg_error*self.threshold_multiplier))/5)
-        fixed_height = self.h*((5-(1))/5)
+        fixed_height = self.h*((5-1)/5)
         pygame.draw.aaline(screen, (0, 255, 0), (0.0, median_height), (self.w, median_height))
         pygame.draw.aaline(screen, (0, 0, 255), (0.0, avg_height), (self.w, avg_height))
         pygame.draw.line(screen, (255, 255, 0), (0.0, fixed_height), (self.w, fixed_height))
@@ -115,24 +130,25 @@ class DataAnalyzer:
                 pygame.draw.lines(screen, color, False, points)
 
     def infer_measurements(self, w, bird):
-        ps = []
-        vs = []
-        for i in bird.neighbours:
-            n = w.birds[i]
+        ps = [0] * Bird.neighborhood_size
+        vs = [0] * Bird.neighborhood_size
+        v2s = [0] * Bird.neighborhood_size
+        for i in range(0, len(bird.neighbours)):
+            n = w.birds[bird.neighbours[i]]
             found = False
             for j in range(0, len(n.neighbours)):
                 if bird.id == n.neighbours[j]:
-                    ps.append(-n.p_measurements[j])
-                    vs.append(n.old_v + bird.error_vector(n.v_std))
+                    ps[i] = -n.p_measurements[j]
                     found = True
 
             if not found:
-                distance = n.old_p - bird.old_p + Bird.error_vector(n.p_std)
-                velocity = n.old_v + Bird.error_vector(n.v_std)
-                ps.append(distance)
-                vs.append(velocity)
+                distance = n.old_p - bird.old_p + pygame.Vector2(w.p_errors[n.id][bird.id * 2],w.p_errors[n.id][bird.id * 2 + 1])
+                ps[i] = distance
 
-        return ps, vs
+            vs[i] = n.old_v + pygame.Vector2(w.p_errors[n.id][bird.id * 2], w.p_errors[n.id][bird.id * 2 + 1])
+            v2s[i] = bird.v + pygame.Vector2(w.p_errors[n.id][bird.id * 2], w.p_errors[n.id][bird.id * 2 + 1])
+
+        return ps, vs, v2s
 
     def infer_target(self, w, bird):
         if len(bird.target_sequence) > 0:
@@ -158,21 +174,28 @@ class DataAnalyzer:
         return error
 
     def mark_suspicious_birds(self, w):
-        if len(self.avg_errors) >= 50:
+        if len(self.avg_errors) >= 0:
             # Mark birds suspected to be nonflockers
             for i in range(0, len(w.birds)):
                 bird_error = self.avg_errors[self.current_index][i]
                 bird = w.birds[i]
-                record_limit = 600
+
+                is_intruder = type(bird) != Bird
+
+                if is_intruder:
+                    self.bad_error_sum += bird_error
+                else:
+                    self.good_error_sum += bird_error
+
                 if bird_error > self.median_error * self.threshold_multiplier:
                     bird.marked = True
-                    if type(bird) == faulty_bird.NonFlocker: # and bird.p.x < record_limit:
+                    if is_intruder: # and bird.p.x < record_limit:
                         self.TP += 1
                     else:
                         self.FP += 1
                 else:
                     bird.marked = False
-                    if type(bird) == faulty_bird.NonFlocker: # and bird.p.x < record_limit:
+                    if is_intruder: # and bird.p.x < record_limit:
                         self.FN += 1
                     else:
                         self.TN += 1

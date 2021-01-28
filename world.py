@@ -1,5 +1,6 @@
-import numpy
+import numpy as np
 import pygame
+import time
 
 class World:
     target_range = 80
@@ -28,10 +29,12 @@ class World:
 
     def calculate_distances(self):
         if len(self.distances) < len(self.birds):
-            self.distances = numpy.zeros((len(self.birds), len(self.birds)))
+            self.distances = np.zeros((len(self.birds), len(self.birds)))
 
         for i in range(0, len(self.birds)):
-            for j in range(i + 1, len(self.birds)):
+            for j in range(0, len(self.birds)):
                 distance = self.birds[i].p - self.birds[j].p
-                self.distances[i][j] = distance.y ** 2 + distance.x ** 2
-                self.distances[j][i] = self.distances[i][j]
+                self.distances[i][j] = distance.length_squared()
+
+        self.p_errors = np.random.normal(0, 1, size=(len(self.birds), len(self.birds)*2))
+        self.v_errors = np.random.normal(0, 1, size=(len(self.birds), len(self.birds)*2))
