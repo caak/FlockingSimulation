@@ -1,14 +1,10 @@
 import intruder
-from world import World
-import world_configs
-from data_analyzer import DataAnalyzer
+import layouts
+from tracer import Tracer
 from bird import Bird
-import sys
 import os
-from datetime import datetime
 
-
-layout = world_configs.HourGlass
+layout = layouts.HourGlass
 intruder_type = intruder.NonFlocker
 
 
@@ -20,7 +16,7 @@ bad_count = 10
 bird_count = good_count + bad_count
 
 p_std = 5
-v_std = 5
+v_std = 0.1
 
 timesteps = 2000
 
@@ -41,15 +37,13 @@ for simulation in range(0, 10):
     for i in range(0, 1):
         w = layout(width, height, good_count, bad_count, p_std, v_std, intruder_type)
 
-        charter = DataAnalyzer(width, 10, 100, good_count, bad_count)
+        charter = Tracer(width, 10, 100, good_count, bad_count)
 
-        for step in range(0, 2000):
-            w.update(10)
+        for step in range(0, timesteps):
+            w.update(1)
             charter.track(w)
             error_time_bad[step] += charter.bad_error_sum/bad_count
             error_time_good[step] += charter.good_error_sum/good_count
-            charter.bad_error_sum = 0.0
-            charter.good_error_sum = 0.0
 
             distances = []
 
@@ -68,10 +62,7 @@ for simulation in range(0, 10):
                         good_scatter[distance] = []
                     good_scatter[distance].append(error)
 
-            avg_t_since_t.append(sum(distances)/len(distances))
-
     print(simulation)
-    print(sum(avg_t_since_t)/len(avg_t_since_t))
 
 
 layout_string = str(layout.__name__).lower()

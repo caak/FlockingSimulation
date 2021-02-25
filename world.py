@@ -12,8 +12,10 @@ class World:
         self.distances = []
         self.p_errors = []
         self.v_errors = []
+        self.v_sum = 0.0
 
     def update(self, dt):
+        self.v_sum = 0.0
         self.calculate_distances()
 
         for bird in self.birds:
@@ -34,7 +36,11 @@ class World:
         for i in range(0, len(self.birds)):
             for j in range(0, len(self.birds)):
                 distance = self.birds[i].p - self.birds[j].p
-                self.distances[i][j] = distance.length_squared()
+                self.distances[i][j] = distance.length()
+
 
         self.p_errors = np.random.normal(0, 1, size=(len(self.birds), len(self.birds)*2))
+        self.p_errors = np.multiply(self.p_errors, self.p_stds[:, np.newaxis])
         self.v_errors = np.random.normal(0, 1, size=(len(self.birds), len(self.birds)*2))
+        self.v_errors = np.multiply(self.v_errors, self.v_stds[:, np.newaxis])
+

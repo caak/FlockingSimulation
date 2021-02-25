@@ -18,7 +18,7 @@ python3 error_rate_test.py 1.4 $timestamp &
 python3 error_rate_test.py 1.5 $timestamp &
 python3 error_rate_test.py 1.6 $timestamp &
 python3 error_rate_test.py 1.7 $timestamp &
-python3 error_rate_test.py 1.8 $timestamp &
-python3 error_rate_test.py 1.9 $timestamp &
-python3 error_rate_test.py 2.0 $timestamp
+python3 error_rate_test.py 0.8 $timestamp &
+python3 error_rate_test.py 0.9 $timestamp &
+python3 error_rate_test.py 1.0 $timestamp
 wait

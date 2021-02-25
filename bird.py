@@ -8,13 +8,13 @@ import time
 class Bird:
 
     avoid_range = 100
-    attraction_weight = 10.0
+    attraction_weight = 5
     avoidance_weight = 0.05
-    alignment_weight = 2
-    target_weight = 200
+    alignment_weight = 100
+    target_weight = 400
 
     neighborhood_size = 5
-    max_speed = 200
+    max_speed = 2
     max_speed_squared = max_speed**2
 
     attraction_sum = 0.0
@@ -22,7 +22,7 @@ class Bird:
     alignment_sum = 0.0
     target_sum = 0.0
 
-    turn_rate_factor = 0.05
+    turn_rate_factor = 2
 
     total_duration = 0.0
 
@@ -51,7 +51,8 @@ class Bird:
 
     def calculate_v(self, w):
         self.time_since_target += 1
-        v = Bird.flock(self.p_measurements, self.v_measurements, self.get_current_target(w), self.v)
+        self_v_measurement = self.v #+ pygame.Vector2(w.v_errors[self.id][self.id], w.v_errors[self.id][self.id+1])
+        v = Bird.flock(self.p_measurements, self.v_measurements, self.get_current_target(w), self_v_measurement)
         return v
 
     @staticmethod
@@ -69,17 +70,17 @@ class Bird:
 
         # self.old_v = pygame.Vector2(self.v)
 
-        new_v = (target + avoidance + alignment + attraction)*Bird.turn_rate_factor
-        new_v += current_v
+        new_v = (target + avoidance + alignment + attraction).normalize()*(Bird.turn_rate_factor) + current_v
+        new_v = (new_v.normalize()*(Bird.max_speed))#*(Bird.turn_rate_factor * dt)
         # if new_v.length() > Bird.max_speed:
         #     new_v *= Bird.max_speed / new_v.length()
 
-        return new_v.normalize()*Bird.max_speed
+        return new_v#(new_v + current_v).normalize()*Bird.max_speed
 
 
     def update_p(self, dt):
         self.old_p = pygame.Vector2(self.p)
-        self.p += self.v*dt*0.002
+        self.p += self.v*dt
 
     def get_current_target(self, w):
         if len(self.target_sequence) > 0:
@@ -106,8 +107,7 @@ class Bird:
                 # This case helps break birds apart when stuck in the same position
                 avoidance += pygame.Vector2((random.randint(0, 1) - 0.5) * 0.1, (random.randint(0, 1) - 0.5) * 0.1)
             elif length < Bird.avoid_range:
-            # else:
-                # avoidance += (-distance).normalize() / distance.length()
+
                 avoidance += -distance * (Bird.avoid_range-length)
 
         return avoidance * Bird.avoidance_weight

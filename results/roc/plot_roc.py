@@ -1,9 +1,20 @@
 import matplotlib.pyplot as plt
 
+layout = 'hourglass'
+intruder_type = 'nonflocker'
+
+
 FPRs = []
 TPRs = []
 
-with open('hourglass/non_flocker/results_1_1.dat', 'r') as f:
+filename = layout + '/' + intruder_type + '/roc_5_0.02.dat'
+# filename = layout + '/' + intruder_type + '/results_5_5.dat'
+
+
+
+with open(filename, 'r') as f:
+    line = f.readline()
+    title = 'p_std, v_std = ' + line
     line = f.readline()
     line = f.readline()
     while line != '':
@@ -12,5 +23,7 @@ with open('hourglass/non_flocker/results_1_1.dat', 'r') as f:
         TPRs.append(float(values[1].strip()))
         line = f.readline()
 
-plt.plot(FPRs, TPRs)
+plt.ylim((0, 1))
+plt.plot(FPRs, TPRs, marker='o')
+plt.title(title)
 plt.show()

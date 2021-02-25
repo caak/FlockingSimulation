@@ -5,7 +5,7 @@ import intruder
 import time
 
 
-class DataAnalyzer:
+class Tracer:
     def __init__(self, w, h, tracking_length, good_count, bad_count):
         self.errors = []
         self.avg_errors = []
@@ -31,14 +31,18 @@ class DataAnalyzer:
         self.good_error_sum = 0.0
         self.bad_error_sum = 0.0
 
+        self.max_error = 0.0
+
     def reset_confusion_matrix(self):
         self.FP = 0
         self.TP = 0
         self.FN = 0
         self.TN = 0
 
-    # update and add current errors + avg_errors + avg_error + median_error
     def track(self, w):
+        # self.good_error_sum = 0.0
+        # self.bad_error_sum = 0.0
+
         self.current_index += 1
         if self.current_index == self.max_length:
             self.current_index = 0
@@ -63,10 +67,9 @@ class DataAnalyzer:
 
             avg_v_observed /= len(v2s)
 
-
             error = (prediction-avg_v_observed).length()
-            errors.append(error)
 
+            errors.append(error)
 
             avg_errors.append(self.calculate_running_avg(t, error))
 
@@ -99,15 +102,17 @@ class DataAnalyzer:
 
         # top = max(self.values)*1.01
         # bot = min(self.values)*0.99
-        median_height = self.h*((5-(self.median_error*self.threshold_multiplier))/5)
-        avg_height = self.h*((5-(self.avg_error*self.threshold_multiplier))/5)
-        fixed_height = self.h*((5-1)/5)
+        top = self.max_error
+        if top == 0.0:
+            top = 1
+        bot = 0
+        median_height = self.h*((top-(self.median_error*self.threshold_multiplier))/top)
+        avg_height = self.h*((top-(self.avg_error*self.threshold_multiplier))/top)
+        fixed_height = self.h*((top-0.005)/top)
         pygame.draw.aaline(screen, (0, 255, 0), (0.0, median_height), (self.w, median_height))
         pygame.draw.aaline(screen, (0, 0, 255), (0.0, avg_height), (self.w, avg_height))
         pygame.draw.line(screen, (255, 255, 0), (0.0, fixed_height), (self.w, fixed_height))
 
-        top = 5
-        bot = 0
         color = (250, 250, 250)
         if len(self.avg_errors) < 50:
             return
@@ -145,8 +150,8 @@ class DataAnalyzer:
                 distance = n.old_p - bird.old_p + pygame.Vector2(w.p_errors[n.id][bird.id * 2],w.p_errors[n.id][bird.id * 2 + 1])
                 ps[i] = distance
 
-            vs[i] = n.old_v + pygame.Vector2(w.p_errors[n.id][bird.id * 2], w.p_errors[n.id][bird.id * 2 + 1])
-            v2s[i] = bird.v + pygame.Vector2(w.p_errors[n.id][bird.id * 2], w.p_errors[n.id][bird.id * 2 + 1])
+            vs[i] = n.old_v + pygame.Vector2(w.v_errors[n.id][bird.id * 2], w.v_errors[n.id][bird.id * 2 + 1])
+            v2s[i] = bird.v + pygame.Vector2(w.v_errors[n.id][bird.id * 2], w.v_errors[n.id][bird.id * 2 + 1])
 
         return ps, vs, v2s
 
@@ -161,7 +166,7 @@ class DataAnalyzer:
         return target
 
     def calculate_running_avg(self, bird, error):
-        average_length = 10
+        average_length = 50
         if len(self.errors) >= average_length:
             index = self.current_index-1
             for i in range(0, average_length-1):
@@ -170,7 +175,8 @@ class DataAnalyzer:
                 error += self.errors[index][bird]
                 index -= 1
             error = error / average_length
-
+        if error > self.max_error and len(self.avg_errors) >= 50:
+            self.max_error = error
         return error
 
     def mark_suspicious_birds(self, w):
@@ -183,9 +189,9 @@ class DataAnalyzer:
                 is_intruder = type(bird) != Bird
 
                 if is_intruder:
-                    self.bad_error_sum += bird_error
+                    self.bad_error_sum += self.errors[self.current_index][i]
                 else:
-                    self.good_error_sum += bird_error
+                    self.good_error_sum += self.errors[self.current_index][i]
 
                 if bird_error > self.median_error * self.threshold_multiplier:
                     bird.marked = True

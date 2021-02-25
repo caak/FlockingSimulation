@@ -1,27 +1,18 @@
 import time
 from numpy import random
+import numpy as np
 
 from numpy.random import default_rng
 
 iteration_count = 10000
 
-start = time.thread_time_ns()
-rng = default_rng()
-for i in range(0, iteration_count):
-    vals = rng.standard_normal(10)
-    more_vals = rng.standard_normal(10)
+a = np.full((10,10), 1)
+b = np.arange(0, 10, 1)
 
-fast = time.thread_time_ns()-start
-# instead of this
+c = np.multiply(a, b[:, np.newaxis])
 
-for i in range(0, iteration_count):
-    vals = random.standard_normal(10)
-    more_vals = random.normal(0, 2.5, size=(60,4))
-slow = time.thread_time_ns()-start - fast
+a = np.ones((20,20))
+b = np.zeros((20,20))
 
-for i in range(0, iteration_count):
-    vals = random.normal(10)
-    random.default_rng().normal(0, 2.5, size=(60, 4))
-mine = time.thread_time_ns()-start - fast - slow
 
-print(fast, slow, mine)
+print(a[1:6][:])

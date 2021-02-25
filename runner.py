@@ -3,20 +3,19 @@ import pygame
 from sim_config import Config
 
 from world import World
-import world_configs
+import layouts
 from bird import Bird
 import intruder
-from data_analyzer import DataAnalyzer
+from tracer import Tracer
+import numpy as np
 
 from pygame.locals import (
     K_s,
-    K_r,
     K_t,
     KEYDOWN,
     QUIT,
     K_SPACE,
     MOUSEBUTTONDOWN,
-    MOUSEBUTTONUP,
 )
 
 width = 1200
@@ -29,29 +28,18 @@ bird_count = good_count + bad_count
 
 chart = True
 
-w = world_configs.HourGlass(width, height, good_count, bad_count, v_std=1, faulty_type=intruder.NonFlocker)
-# w = world_configs.TestSetup(width, height, bird_count)
-# w = world_configs.Merge(width, height, good_count, bad_count)
-# w = world_configs.Circle(width, height, good_count, bad_count, 5)
-# w = world_configs.DualCircle(width, height, good_count, bad_count)
-
-
-
-# for i in range(0, 5):
-#     interval = 50 * 50.0 / 3
-    # w.birds.append(faulty_bird.NonFlocker(200 + (i % 2), 100 + (interval * i), len(w.birds)))
-    # w.birds.append(faulty_bird.FaultyBird(200 + (i % 2), 100 + (interval * i), len(w.birds), 1000, 1))
+w = layouts.HourGlass(width, height, good_count, bad_count, p_std=10, v_std=0.4, intruder_type=intruder.NonFlocker)
 
 screen = pygame.display.set_mode((width, height+data_height))
 data_screen = screen.subsurface(pygame.Rect(0, height, width, data_height))
 
 
-charter = DataAnalyzer(width, data_height, 100, good_count, bad_count)
+charter = Tracer(width, data_height, 100, good_count, bad_count)
 
 pygame.init()
-fixed_wing_img = pygame.transform.scale(pygame.image.load('fixed_wing.png'), (20, 20))
-bad_img = pygame.transform.scale(pygame.image.load('bad.png'), (20, 20))
-target_img = pygame.transform.scale(pygame.image.load('flag.png'), (20, 20))
+fixed_wing_img = pygame.transform.scale(pygame.image.load('version_1.0/images/fixed_wing.png'), (20, 20))
+bad_img = pygame.transform.scale(pygame.image.load('version_1.0/images/bad.png'), (20, 20))
+target_img = pygame.transform.scale(pygame.image.load('version_1.0/images/flag.png'), (20, 20))
 
 font = pygame.font.SysFont(None, 72)
 
@@ -77,7 +65,7 @@ def main():
         # if not, birds may suddenly 'skip' long distances
         # if dt > 50:
         #     print('whoops. That frame took ' + str(dt) + ' ms')
-            # continue
+        # continue
 
         # the exit event is needed to stop this while loop
         # all other events are handled in handle_event() for cleaner code
@@ -89,7 +77,11 @@ def main():
 
         # make world update itself one time-step
         if not config.pause:
-            w.update(10)
+            w.update(1)
+            config.iteration_count += 1
+            distances = np.sort(w.distances, axis=0)
+            # print(distances[1:6][:])
+            print(np.sum(distances[1:7][:])/(bird_count*5))
 
         if chart and not config.pause:
             charter.track(w)
@@ -97,7 +89,8 @@ def main():
         # draw new frame
         draw(screen, w, avg_fr, config)
 
-        config.iteration_count += 1
+        if config.iteration_count == 2000:
+            config.pause = True
 
 
 def set_target(m_pos, w):

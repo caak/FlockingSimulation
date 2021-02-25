@@ -1,11 +1,9 @@
-from world import World
-import world_configs
-from data_analyzer import DataAnalyzer
+import layouts
+from tracer import Tracer
 from bird import Bird
 import pygame
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 from timed_world import TimedWorld
 
 iteration_count = 500
@@ -19,12 +17,15 @@ bird_count = good_count + bad_count
 
 threshold = 0
 
-hourglass = world_configs.HourGlass(width, height, good_count, bad_count)
+hourglass = layouts.HourGlass(width, height, good_count, bad_count)
 w = TimedWorld(hourglass.width, hourglass.height)
 w.birds = hourglass.birds
 w.targets = hourglass.targets
+w.p_stds = hourglass.p_stds
+w.v_stds = hourglass.v_stds
 
-charter = DataAnalyzer(width, 10, 100, good_count, bad_count)
+
+charter = Tracer(width, 10, 100, good_count, bad_count)
 
 charter.threshold_multiplier = threshold
 
@@ -54,6 +55,8 @@ update_t = sum(update_ts)/len(update_ts)
 chart_t = sum(chart_ts)/len(chart_ts)
 total_t = update_t + chart_t
 times = np.divide(ts.sum(axis=0), iteration_count)
+
+print(update_t)
 
 print('update_ts, chart_ts')
 print(update_t/total_t, chart_t/total_t)

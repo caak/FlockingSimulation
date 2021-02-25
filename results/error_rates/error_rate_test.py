@@ -1,13 +1,19 @@
 import sys
-sys.path.append('/home/simon/Desktop/flocker/flocking-simulation')
-import world_configs
-from data_analyzer import DataAnalyzer
+sys.path.append('/')
+import layouts
+from tracer import Tracer
 import sys
 import os
 import intruder
+import numpy as np
 
 width = 1200
 height = 900
+
+layout = layouts.HourGlass
+intruder_type = intruder.NonFlocker
+
+step_count = 2000
 
 good_count = 50
 bad_count = 10
@@ -21,6 +27,8 @@ v_std = float(sys.argv[1]) * float(sys.argv[2])
 goods = []
 bads = []
 ratios = []
+p_stds = []
+avg_distances = []
 
 
 for simulation in range(0, 21):
@@ -29,14 +37,18 @@ for simulation in range(0, 21):
 
     bad_sums = []
     good_sums = []
+    n = good_count + bad_count
+    distances = np.zeros((n, n))
     for i in range(0, 3):
-        w = world_configs.HourGlass(width, height, good_count, bad_count, p_std, v_std, intruder.NonFlocker)
+        w = layout(width, height, good_count, bad_count, p_std, v_std, intruder_type=intruder_type)
 
-        charter = DataAnalyzer(width, 10, 100, good_count, bad_count)
+        charter = Tracer(width, 10, 100, good_count, bad_count)
 
-        for step in range(0, 2000):
-            w.update(10)
+
+        for step in range(0, step_count):
+            w.update(1)
             charter.track(w)
+            distances = np.add(distances, w.distances)
         P = charter.TP + charter.FN
         N = charter.TN + charter.FP
         bad_sums.append(charter.bad_error_sum/P)
@@ -45,29 +57,33 @@ for simulation in range(0, 21):
     avg_bad_error = sum(bad_sums)/len(bad_sums)
     avg_good_error = sum(good_sums)/len(good_sums)
 
+    avg_distance = np.sum(distances)/(3*step_count*n*n)
+
     goods.append(avg_good_error)
     bads.append(avg_bad_error)
     ratios.append(avg_good_error/avg_bad_error)
+    p_stds.append(p_std)
+    avg_distances.append(avg_distance)
 
-    print(v_std, p_std, avg_good_error, avg_bad_error)
+    print(v_std, p_std, avg_good_error, avg_bad_error, avg_distance)
 
     p_std += 1
 
 
 
 subfolder = sys.argv[3]
-filename = subfolder + "/results_" + str(v_std)
+filename = subfolder + "/results_" + '%.2f' %v_std
+
+layout_string = str(layout.__name__).lower()
+intruder_string = str(intruder_type.__name__).lower()
 
 if not os.path.isdir(subfolder):
     os.mkdir(subfolder)
 
 
 with open(filename, "w") as f:
-    f.write(str(ratios[0]))
-    for i in range(1, len(ratios)):
-        f.write(',')
-        f.write(str(ratios[i]))
-
-    f.write('\n')
-    txt = "p_std: {pstd:.2f}, v_std: {vstd:.2f}"
-    f.write(txt.format(pstd=p_std, vstd=v_std))
+    txt = "v_std: {vstd:.2f}, layout: {layout}, intruder: {intruder}, stepcount: {step_count} \n"
+    f.write(txt.format(vstd=v_std, layout=layout_string, intruder=intruder_string, step_count=step_count))
+    f.write('p_std, ratio\n')
+    for i in range(0, len(ratios)):
+        f.write(str(p_stds[i])+','+str(ratios[i]) +',' + str(avg_distances[i]) + '\n')

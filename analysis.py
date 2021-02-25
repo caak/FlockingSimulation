@@ -1,4 +1,4 @@
-import world_configs
+import layouts
 import pygame
 import intruder
 from bird import Bird
@@ -20,7 +20,7 @@ def calculate_neighbor_avoidance(self, n, world):
 normal_bird_count = 50
 bad_bird_count = 1
 
-w = world_configs.HourGlass(1200, 700, normal_bird_count)
+w = layouts.HourGlass(1200, 700, normal_bird_count)
 interval = normal_bird_count * 50.0 / bad_bird_count
 for i in range(0, bad_bird_count):
     w.birds.append(intruder.Follower(200 + (i % 2), 490 + (interval * i), len(w.birds), 10, 1))

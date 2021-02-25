@@ -1,5 +1,3 @@
-import numpy
-import pygame
 import time
 from world import World
 

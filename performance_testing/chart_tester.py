@@ -1,12 +1,7 @@
-from world import World
-import world_configs
-from data_analyzer import DataAnalyzer
-from bird import Bird
-import pygame
+import layouts
+from tracer import Tracer
 import time
 import numpy as np
-import matplotlib.pyplot as plt
-from timed_world import TimedWorld
 
 iteration_count = 500
 
@@ -19,9 +14,9 @@ bird_count = good_count + bad_count
 
 threshold = 1
 
-w = world_configs.HourGlass(width, height, good_count, bad_count)
+w = layouts.HourGlass(width, height, good_count, bad_count)
 
-charter = DataAnalyzer(width, 10, 100, good_count, bad_count)
+charter = Tracer(width, 10, 100, good_count, bad_count)
 
 charter.threshold_multiplier = threshold
 
