@@ -11,8 +11,8 @@ good_count = 50
 bad_count = 10
 bird_count = good_count + bad_count
 
-p_std = 2
-v_std = 0.02
+p_std = 5
+v_std = 0.03
 
 timesteps = 2000
 

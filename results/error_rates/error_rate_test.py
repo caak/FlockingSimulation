@@ -41,7 +41,7 @@ for simulation in range(0, 21):
     good_sums = []
     n = good_count + bad_count
     distances = np.zeros((n, n))
-    for i in range(0, 5):
+    for i in range(0, 10):
         w = layout(width, height, good_count, bad_count, p_std, v_std, intruder_type=intruder_type)
         w.positions = [pygame.Vector2(0, 0)] * n
 
@@ -60,7 +60,7 @@ for simulation in range(0, 21):
     avg_bad_error = sum(bad_sums)/len(bad_sums)
     avg_good_error = sum(good_sums)/len(good_sums)
 
-    avg_distance = np.sum(distances)/(3*step_count*n*n)
+    avg_distance = np.sum(distances)/(10*step_count*n*n)
 
     goods.append(avg_good_error)
     bads.append(avg_bad_error)

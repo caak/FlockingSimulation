@@ -30,7 +30,7 @@ def read_data_file(filepath):
                 goods.append(avg_good / step_size)
                 bads.append(avg_bad / step_size)
 
-            step += 1
+            step += step_size
 
     goods.pop()
     bads.pop()
@@ -59,6 +59,7 @@ ax1.plot(non_flocker_xs, non_flocker_bads, label='intruders', linestyle='--')
 # ax1.xlabel("Time")
 # ax1.set_ylim(bottom=2, top=6)
 ax1.set(xlabel='Time', ylabel='Residual')
+ax1.set_title('Nonflocker')
 ax1.legend()
 
 layout = 'hourglass'
@@ -81,11 +82,13 @@ ax2.plot(non_flocker_xs, non_flocker_bads, label='intruders', linestyle='--')
 # ax1.set_ylim(bottom=2, top=6)
 ax2.set(xlabel='Time', ylabel='Residual')
 # ax1.set_title('Residual over time')
+ax2.set_title('Follower')
+
 ax1.legend()
 
 
 plt.ylabel("Residual")
-plt.xlabel("time")
+plt.xlabel("Time")
 plt.legend()
 fig.suptitle('Residual over Time')
 
