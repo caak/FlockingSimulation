@@ -16,6 +16,8 @@ The simulations are carried out by mainly in 5 of the files:
 * intruder.py
 * layouts.py
 
+Again, while runner.py is a recommended starting point for testing the code, it does not contain any simulation code except for visualization.
+
 world.py defines World objects, used to manage all world objects. World objects are typically initialized from the layout.py file, where the different layouts and their initial condiations are defined.
 bird.py defines the Bird class, which carries out the main flocking algorithm, and stores position, velocity and neighborhoods for each Bird object.
 tracer.py defines the Tracer class, responsible to the CID algorithm. The track() function is intended to run once each timestep, and carry out relevant work. It is also responsible for drawing the bottom part of the simulation window of runner.py
