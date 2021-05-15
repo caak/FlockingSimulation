@@ -3,76 +3,90 @@ import os
 
 print(os.listdir('/'))
 
+def read_data_file(filepath):
+    xs = []
+    goods = []
+    bads = []
 
-import numpy as np
+    step = 0
+    step_size = 20
+    # line = f.readline()
+    line = 'tmep'
+    with open(filepath, 'r') as f:
+        while line[0] != 'p':
+            line = f.readline()
+            if step > 1:
+                xs.append(step)
+                avg_good = 0.0
+                avg_bad = 0.0
+                for i in range(0, step_size):
+                    if line[0] == 'p':
+                        break
+                    values = line.split(',')
+                    avg_bad += float(values[1])
+                    avg_good += float(values[0])
+                    line = f.readline()
+
+                goods.append(avg_good / step_size)
+                bads.append(avg_bad / step_size)
+
+            step += 1
+
+    goods.pop()
+    bads.pop()
+    xs.pop()
+
+    return xs, goods, bads
 
 layout = 'hourglass'
 intruder = 'nonflocker'
 
 folder = layout + '/' + intruder
 
+non_flocker_xs, non_flocker_goods, non_flocker_bads = read_data_file(folder + '/time.dat')
 
-xs = []
-goods = []
-bads = []
 
-step = 0
-with open(folder + "/time.dat", 'r') as f:
-    line = f.readline()
-    while line[0] != 'p':
-
-        if step > 1:
-            xs.append(step)
-            values = line.split(',')
-            goods.append(float(values[0]))
-            bads.append(float(values[1]))
-        step += 1
-        line = f.readline()
 
 plt.rcParams.update({'font.size': 22})
-plt.scatter(xs, goods, label='normal drones', marker='x')
-plt.scatter(xs, bads, label='intruders', marker='o')
-# plt.ylim((2, 6))
-plt.title('Residual over time')
+fig, (ax1, ax2) = plt.subplots(1, 2)
+# ax1.set_ylim((0.005, 0.02))
+# ax2.set_ylim((0.005, 0.02))
+ax1.plot(non_flocker_xs, non_flocker_goods, label='normal drones', linewidth=5)
+ax1.plot(non_flocker_xs, non_flocker_bads, label='intruders', linestyle='--')
+
+# ax1.title('Residual over time')
+# ax1.ylabel("Residual")
+# ax1.xlabel("Time")
+# ax1.set_ylim(bottom=2, top=6)
+ax1.set(xlabel='Time', ylabel='Residual')
+ax1.legend()
+
+layout = 'hourglass'
+intruder = 'follower'
+
+folder = layout + '/' + intruder
+
+non_flocker_xs, non_flocker_goods, non_flocker_bads = read_data_file(folder + '/time.dat')
+
+
+
+ax1.set_ylim((0.04, 0.08))
+ax2.set_ylim((0.04, 0.08))
+ax2.plot(non_flocker_xs, non_flocker_goods, label='normal drones', linewidth=5)
+ax2.plot(non_flocker_xs, non_flocker_bads, label='intruders', linestyle='--')
+
+# ax1.title('Residual over time')
+# ax1.ylabel("Residual")
+# ax1.xlabel("Time")
+# ax1.set_ylim(bottom=2, top=6)
+ax2.set(xlabel='Time', ylabel='Residual')
+# ax1.set_title('Residual over time')
+ax1.legend()
+
+
 plt.ylabel("Residual")
-plt.xlabel("Time")
+plt.xlabel("time")
 plt.legend()
-
-fig = plt.figure()
-
-bad_x = []
-bad_y = []
-
-good_x = []
-good_y = []
-
-with open(folder + "/time_since_target.dat", 'r') as f:
-    f.readline()
-    line = f.readline()
-    line = f.readline()
-    while line[0:4] != 'good':
-        values = line.split(',')
-        print(values)
-        bad_x.append(int(values[0]))
-        bad_y.append(float(values[1]))
-        line = f.readline()
-    line = f.readline()
-    while len(line) != 0:
-        values = line.split(',')
-        good_x.append(int(values[0]))
-        good_y.append(float(values[1]))
-        line = f.readline()
-
-# plt.ylim((2, 6))
-# plt.xlim((0, 100))
-# plt.scatter(bad_x, bad_y, marker='x')
-# plt.scatter(good_x, good_y, marker='o')
-
-plt.scatter(bad_x, bad_y, label='intruders', marker='x')
-plt.scatter(good_x, good_y, label='normal drones', marker='o')
-plt.title('Residual at time since last target')
-plt.ylabel("Residual")
-plt.xlabel("Time since target")
-plt.legend()
+fig.suptitle('Residual over Time')
 
 plt.show()

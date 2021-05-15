@@ -2,6 +2,7 @@ import intruder
 import layouts
 from tracer import Tracer
 import numpy as np
+import pygame
 
 width = 1200
 height = 900
@@ -10,8 +11,8 @@ good_count = 50
 bad_count = 10
 bird_count = good_count + bad_count
 
-p_std = 5
-v_std = 0.04
+p_std = 2
+v_std = 0.02
 
 timesteps = 2000
 
@@ -40,6 +41,7 @@ for i in range(0, len(layouts)):
         FPRs = []
         for k in range(0, 3):
             w = layout(width, height, good_count, bad_count, p_std, v_std, intruder_type)
+            w.positions = [pygame.Vector2(0, 0)] * bird_count
 
             charter = Tracer(width, 10, 100, good_count, bad_count)
 

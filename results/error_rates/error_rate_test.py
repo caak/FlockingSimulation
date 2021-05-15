@@ -1,11 +1,13 @@
 import sys
-sys.path.append('/')
+sys.path.append("/home/simon/Desktop/flocker/flocking-simulation")
+# sys.path.append('/')
 import layouts
 from tracer import Tracer
 import sys
 import os
 import intruder
 import numpy as np
+import pygame
 
 width = 1200
 height = 900
@@ -39,8 +41,9 @@ for simulation in range(0, 21):
     good_sums = []
     n = good_count + bad_count
     distances = np.zeros((n, n))
-    for i in range(0, 3):
+    for i in range(0, 5):
         w = layout(width, height, good_count, bad_count, p_std, v_std, intruder_type=intruder_type)
+        w.positions = [pygame.Vector2(0, 0)] * n
 
         charter = Tracer(width, 10, 100, good_count, bad_count)
 
@@ -67,12 +70,12 @@ for simulation in range(0, 21):
 
     print(v_std, p_std, avg_good_error, avg_bad_error, avg_distance)
 
-    p_std += 1
+    p_std += 0.4
 
 
 
 subfolder = sys.argv[3]
-filename = subfolder + "/results_" + '%.2f' %v_std
+filename = subfolder + "/results_" + '%.5f' %v_std
 
 layout_string = str(layout.__name__).lower()
 intruder_string = str(intruder_type.__name__).lower()
@@ -82,7 +85,7 @@ if not os.path.isdir(subfolder):
 
 
 with open(filename, "w") as f:
-    txt = "v_std: {vstd:.2f}, layout: {layout}, intruder: {intruder}, stepcount: {step_count} \n"
+    txt = "v_std: {vstd:.5f}, layout: {layout}, intruder: {intruder}, stepcount: {step_count} \n"
     f.write(txt.format(vstd=v_std, layout=layout_string, intruder=intruder_string, step_count=step_count))
     f.write('p_std, ratio\n')
     for i in range(0, len(ratios)):

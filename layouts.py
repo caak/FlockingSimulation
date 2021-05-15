@@ -6,34 +6,69 @@ import random
 import math
 import numpy as np
 
-class TestSetup(World):
+class Formation(World):
     def __init__(self, width, height, n):
         super().__init__(width, height)
+        predicted_d = Bird.avoid_range-(Bird.attraction_weight / (Bird.avoidance_weight * Bird.neighborhood_size))
+        # predicted_d = 150
+        h_margin = 0
+        count = 0
+        start_x = 200
+        if Bird.neighborhood_size == 6:
+            move_x = predicted_d/2
+            height = math.sqrt(predicted_d**2-move_x**2)
+        elif Bird.neighborhood_size == 4:
+            move_x = 0
+            height = predicted_d
         for i in range(0, n):
-            self.birds.append(Bird(200 + (i%2), 100 + (50 * i), i))
+            if i % 10 == 0:
+                h_margin += height
+                start_x += move_x
+                move_x *= -1
+            if Bird.neighborhood_size == 4 and (i == 0 or i == 9 or i == 90 or i == 99):
+                continue
+            self.birds.append(Bird(start_x + (predicted_d*(i%10)), 100 + h_margin, count))
+
+            count += 1
+        self.p_stds = np.full(len(self.birds), 0.0)
+        self.v_stds = np.full(len(self.birds), 0.0)
+
+class EmptyWorld(World):
+    def __init__(self, width, height, n):
+        super().__init__(width, height)
+        predicted_d = Bird.avoid_range-(Bird.attraction_weight / (Bird.avoidance_weight * Bird.neighborhood_size))
+        # predicted_d = 150
+        h_margin = 0
+        count = 0
+
+        for i in range(0, n):
+            self.birds.append(Bird(random.randint(0, width), random.randint(0, height), i))
+            count += 1
+        self.p_stds = np.full(len(self.birds), 0.0)
+        self.v_stds = np.full(len(self.birds), 0.0)
 
 
 class HourGlass(World):
-    def __init__(self, width, height, good_count, bad_count, p_std=1, v_std=1, intruder_type=NonFlocker):
+    def __init__(self, width, height, good_count, bad_count, p_std=1, v_std=1, intruder_type=NonFlocker, y_max_distance=2000):
         super().__init__(width, height)
         targets = [[200, 100], [600, 275], [1000, 100],
                    [1000, 600], [600, 425], [200, 600]]
         for t in targets:
             self.targets.append(pygame.Vector2(t[0], t[1]))
 
-        y_max_distance = 1000
         good_y_distance = y_max_distance/good_count
-        bad_y_distance = (y_max_distance-300)/bad_count
 
         for i in range(0, good_count):
             bird = Bird(200 + ((i%2))*40, 300 + (good_y_distance * i), i, p_std=p_std, v_std=v_std)
             bird.target_sequence = self.targets
             self.birds.append(bird)
 
-        for i in range(0, bad_count):
-            bird = intruder_type(200 + (i % 2) * 40, 700 + (bad_y_distance * i), i + good_count, p_std=p_std, v_std=v_std)
-            bird.target_sequence = self.targets
-            self.birds.append(bird)
+        if bad_count > 0:
+            bad_y_distance = (y_max_distance-300)/bad_count
+            for i in range(0, bad_count):
+                bird = intruder_type(200 + (i % 2) * 40, 700 + (bad_y_distance * i), i + good_count, p_std=p_std, v_std=v_std)
+                bird.target_sequence = self.targets
+                self.birds.append(bird)
 
         self.p_stds = np.full(good_count + bad_count, p_std)
         self.v_stds = np.full(good_count + bad_count, v_std)

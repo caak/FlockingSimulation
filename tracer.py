@@ -21,7 +21,7 @@ class Tracer:
         self.avg_error = 0.0
         self.median_error = 0.0
 
-        self.threshold_multiplier = 2.0
+        self.threshold_multiplier = 1.3
 
         self.FP = 0
         self.TP = 0
@@ -40,8 +40,8 @@ class Tracer:
         self.TN = 0
 
     def track(self, w):
-        # self.good_error_sum = 0.0
-        # self.bad_error_sum = 0.0
+        self.good_error_sum = 0.0
+        self.bad_error_sum = 0.0
 
         self.current_index += 1
         if self.current_index == self.max_length:
@@ -112,11 +112,11 @@ class Tracer:
         pygame.draw.aaline(screen, (0, 255, 0), (0.0, median_height), (self.w, median_height))
         pygame.draw.aaline(screen, (0, 0, 255), (0.0, avg_height), (self.w, avg_height))
         pygame.draw.line(screen, (255, 255, 0), (0.0, fixed_height), (self.w, fixed_height))
-
         color = (250, 250, 250)
         if len(self.avg_errors) < 50:
             return
         for tracked in range(0, self.good_count + self.bad_count):
+
             points = []
             for i in range(self.current_index, -1, -1):
                 x = self.w - ((self.current_index-i) * distance)

@@ -2,10 +2,11 @@ import intruder
 import layouts
 from tracer import Tracer
 from bird import Bird
+import pygame
 import os
 
 layout = layouts.HourGlass
-intruder_type = intruder.NonFlocker
+intruder_type = intruder.Follower
 
 
 width = 1200
@@ -15,10 +16,10 @@ good_count = 50
 bad_count = 10
 bird_count = good_count + bad_count
 
-p_std = 5
+p_std = 5.0
 v_std = 0.1
 
-timesteps = 2000
+timesteps = 5000
 
 error_time_bad = [0]*timesteps
 error_time_good = [0]*timesteps
@@ -36,12 +37,17 @@ for simulation in range(0, 10):
     good_sums = []
     for i in range(0, 1):
         w = layout(width, height, good_count, bad_count, p_std, v_std, intruder_type)
+        w.positions = [pygame.Vector2(0, 0)] * bird_count
 
         charter = Tracer(width, 10, 100, good_count, bad_count)
 
         for step in range(0, timesteps):
             w.update(1)
             charter.track(w)
+
+            # if step < 50:
+            #     continue
+
             error_time_bad[step] += charter.bad_error_sum/bad_count
             error_time_good[step] += charter.good_error_sum/good_count
 
@@ -51,6 +57,7 @@ for simulation in range(0, 10):
                 bird = w.birds[i]
                 is_bad = type(bird) != Bird
                 distance = bird.time_since_target
+                # distance = int(bird.distance_to_target)
                 error = charter.errors[charter.current_index][i]
                 if is_bad:
                     if distance not in bad_scatter.keys():
@@ -72,6 +79,8 @@ intruder_string = str(intruder_type.__name__).lower()
 subfolder = layout_string + '/' + intruder_string + '/'
 file_t = subfolder + "time.dat"
 file_t_since_t = subfolder + "time_since_target.dat"
+
+print(subfolder)
 
 if not os.path.isdir(subfolder):
     os.mkdir(subfolder)

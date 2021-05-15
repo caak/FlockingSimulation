@@ -2,6 +2,7 @@ import layouts
 from tracer import Tracer
 import intruder
 import os
+import pygame
 
 width = 1200
 height = 900
@@ -10,13 +11,13 @@ good_count = 50
 bad_count = 10
 bird_count = good_count + bad_count
 
-threshold = 0
+threshold = 1.0
 
 layout = layouts.HourGlass
 intruder_type = intruder.NonFlocker
 
-p_std = 5
-v_std = 0.2
+p_std = 2
+v_std = 0.02
 
 print(p_std, v_std)
 
@@ -24,7 +25,7 @@ output = str(p_std) + ', ' + str(v_std)
 output += '\nthreshold, TPR, FPR\n'
 
 
-for simulation in range(0, 50):
+for simulation in range(0, 15):
     FPR = []
     TPR = []
 
@@ -32,6 +33,7 @@ for simulation in range(0, 50):
     good_sums = []
     for i in range(0, 3):
         w = layout(width, height, good_count, bad_count, p_std=p_std, v_std=v_std, intruder_type=intruder_type)
+        w.positions = [pygame.Vector2(0, 0)] * bird_count
 
         charter = Tracer(width, 10, 100, good_count, bad_count)
 
@@ -56,13 +58,16 @@ for simulation in range(0, 50):
     if avg_FPR == 0.0:
         print('no point continuing')
         break
-    threshold += 0.2
+
+    threshold += 0.1
+
+
 
 layout_string = str(layout.__name__).lower()
 intruder_string = str(intruder_type.__name__).lower()
 
 subfolder = layout_string + '/' + intruder_string + '/'
-file_name = subfolder + "roc_5_0.2.dat"
+file_name = subfolder + "roc_" +str(p_std) +"_" + str(v_std) + ".dat"
 
 if not os.path.isdir(layout_string):
     os.mkdir(layout_string)
