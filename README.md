@@ -28,5 +28,9 @@ The code is actively being worked on, but I intend to freeze a version if the su
 There are many fragments of code that don't serve any current function, but has been used to debug/experiment
 The structure may seem needlessly overcomplicated in places, but keep in mind that not only does the code carry out the flocking algorithm, but it also collects and analyzes data about the state of the simulation at every timestep.
 
+# Future work
+The ability of coordinated attackers to disrupt flocks will be explored, and hopefully some useful bounds on number attackers needed can be derived and experimentally verified.
+![](cut.gif)
+
 
 
