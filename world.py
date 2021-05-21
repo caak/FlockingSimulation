@@ -1,7 +1,6 @@
 import numpy as np
 import bird
 import pygame
-import time
 
 class World:
     target_range = 80

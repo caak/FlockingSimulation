@@ -1,7 +1,5 @@
 import pygame
-
 from sim_config import Config
-
 from world import World
 import layouts
 from bird import Bird
@@ -35,8 +33,6 @@ chart = True
 
 # w = layouts.HourGlass(width, height, good_count, bad_count, p_std=2.0, v_std=0.02, intruder_type=intruder.NonFlocker)
 w = layouts.HourGlass(width, height, good_count, bad_count, 1.0, 0.01, intruder.NonFlocker, y_max_distance=1000+(200*9))
-# Bird.neighborhood_size = 4
-# Bird.target_weight = 100
 # w = layouts.Formation(width, height, 100)
 # w = layouts.EmptyWorld(width, height, 0)
 
