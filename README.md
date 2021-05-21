@@ -1,3 +1,5 @@
+![](img_output.gif)
+
 Code repository for the simulations used of the paper
 "Collaborative Intrusion Detection for Large Autonomous Drone Swarms"
 submitted to CRITIS 2021
@@ -29,6 +31,7 @@ The structure may seem needlessly overcomplicated in places, but keep in mind th
 
 # Future work
 The ability of coordinated attackers to disrupt flocks will be explored, and hopefully some useful bounds on number attackers needed can be derived and experimentally verified.
+
 ![](cut.webm)
 
 
