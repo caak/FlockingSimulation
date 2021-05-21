@@ -30,7 +30,7 @@ The structure may seem needlessly overcomplicated in places, but keep in mind th
 
 # Future work
 The ability of coordinated attackers to disrupt flocks will be explored, and hopefully some useful bounds on number attackers needed can be derived and experimentally verified.
-![](cut.gif)
+![](cut.webm)
 
 
 
