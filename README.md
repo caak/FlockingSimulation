@@ -1,4 +1,3 @@
-![](img_output.gif)
 Code repository for the simulations used of the paper
 "Collaborative Intrusion Detection for Large Autonomous Drone Swarms"
 submitted to CRITIS 2021
